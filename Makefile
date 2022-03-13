@@ -4,7 +4,7 @@ PODMAN_RUN=podman run -it --rm --workdir $(WORKING_DIR) -v .:/app:z $(IMAGE_NAME
 
 .PHONY: all
 all:
-	$(PODMAN_RUN) $(SHELL) -c "g++ $(SRC)/main.cpp -o $(BIN)/main -L$(POCO_CONTAINER_LIB_DIR) -Wall -lPocoNet -lPocoNetSSL"
+	$(PODMAN_RUN) $(SHELL) -c "	mkdir -p $(BIN) && g++ $(SRC)/main.cpp -o $(BIN)/main -L$(POCO_CONTAINER_LIB_DIR) -Wall -lPocoNet -lPocoNetSSL -lPocoFoundation"
 
 .PHONY: build-container
 build-container:
@@ -15,20 +15,20 @@ build-container:
 # as the host isn't exposed to these components otherwise.
 .PHONY: setup-dev
 setup-dev:
-	mkdir -p tmp
-	$(PODMAN_RUN) $(SHELL) -c "cp -r $(POCO_CONTAINER_INCLUDE_DIR) $(WORKING_DIR)/tmp"
-	$(PODMAN_RUN) $(SHELL) -c "cp -r /usr/include/openssl $(WORKING_DIR)/tmp"
+	mkdir -p $(TMP)
+	$(PODMAN_RUN) $(SHELL) -c "cp -r $(POCO_CONTAINER_INCLUDE_DIR) $(WORKING_DIR)/$(TMP)"
+	$(PODMAN_RUN) $(SHELL) -c "cp -r $(OPENSSL_CONTAINER_INCLUDE_DIR) $(WORKING_DIR)/$(TMP)"
 
 .PHONY: runcont
-run:
+runcont:
 	$(PODMAN_RUN)
 
-
+# Example usage for executing a binary within the container
 .PHONY: run-dev-main
 run-dev-main:
-	$(PODMAN_RUN) $(SHELL) -c "LD_LIBRARY_PATH=$(POCO_CONTAINER_LIB_DIR) $(WORKING_DIR)/$(BIN)/main"
+	$(PODMAN_RUN) $(SHELL) -c "LD_LIBRARY_PATH=$(POCO_CONTAINER_LIB_DIR):$(OPENSSL_CONTAINER_LIB_DIR) $(WORKING_DIR)/$(BIN)/main"
 
 .PHONY: clean
 clean:
-	rm -rf tmp/
-	rm -rf bin/*
+	rm -rf $(TMP)/
+	rm -rf $(BIN)/*
